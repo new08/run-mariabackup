@@ -39,9 +39,10 @@ do
   mariabackup --prepare --target-dir "$BASE_DIR" --incremental-dir "$p"		#Restore all incremental backups - merging it with the full backup
 done < incremental_dirs.txt
 
-sudo systemctl stop mysql					#stop the db service so we don't blow things up while swapping stuff out
+sudo systemctl stop mariadb					#stop the db service so we don't blow things up while swapping stuff out
 sudo mv /var/lib/mysql /var/lib/mysql_backup			#back up the existing mysql directory. YOU MAY WANT TO CHANGE THIS, if you're using a different place to store your database
 sudo mariabackup --copy-back --target-dir "$BASE_DIR"		#restore the backup
-sudo chown -R mysql:mysql /var/lib/mysql			#set permissions right. YOU MAY WANT TO CHANGE THIS AS WELL 
-sudo systemctl start mysql					#start back up with restored DB
+sudo chown -R mysql:mysql /var/lib/mysql			#set permissions right. YOU MAY WANT TO CHANGE THIS AS WELL
+# sudo chcon -Rt mysqld_db_t /var/lib/mysql #set selinux label
+sudo systemctl start mariadb					#start back up with restored DB
 rm incremental_dirs.txt						#Cleaning up

@@ -2,7 +2,7 @@
 
 *forked from [jmfederico/run-xtrabackup.sh](https://gist.github.com/jmfederico/1495347)*
 
-Note: have tested on Ubuntu 18.04 with MariaDB 10.3
+Note: have tested on CentOS 7.9 with MariaDB 10.4
 
 ## Links
 
@@ -14,51 +14,54 @@ Note: have tested on Ubuntu 18.04 with MariaDB 10.3
 
 ## Install mariabackup
 
-    sudo apt install mariadb-backup
+    sudo yum install mariadb-backup
 
 ## Create a backup user
 
 ```sql
 -- See https://mariadb.com/kb/en/mariabackup-overview/#authentication-and-privileges
-CREATE USER 'backup'@'localhost' IDENTIFIED BY 'YourPassword';
+CREATE USER 'mariabackup'@'localhost' IDENTIFIED BY 'Se1496';
 -- MariaDB < 10.5:
-GRANT RELOAD, PROCESS, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'backup'@'localhost';
+GRANT RELOAD, PROCESS, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'mariabackup'@'localhost';
 -- MariaDB >= 10.5:
-GRANT RELOAD, PROCESS, LOCK TABLES, BINLOG MONITOR ON *.* TO 'backup'@'localhost';
+GRANT RELOAD, PROCESS, LOCK TABLES, BINLOG MONITOR ON *.* TO 'mariabackup'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
 ## Usage
 
-    MYSQL_PASSWORD=YourPassword bash run-mariabackup.sh
+    sh run-mariabackup.sh
 
 ## Crontab
 
     #MySQL Backup
-    30 2 * * * MYSQL_PASSWORD=YourPassword bash /data/script/run-mariabackup.sh > /data/script/logs/run-mariabackup.sh.out 2>&1
+    0 0 * * * sh /u3/backup/run-mariabackup.sh > /u3/backup/mariabackup/run-mariabackup.sh.out 2>&1
 
 ---
 
 ## Restore Example
 
-    tree /data/mysql_backup/
-    /data/mysql_backup/
+每次完整备份，都会将资料保存到 .../base/$(当前时间) 路径。    
+每次增量备份，都会将资料保存到 .../incr/$(上次完整备份时间) 路径。    
+
+    tree /u3/backup/mariabackup/
+    /u3/backup/mariabackup/
     ├── base
-    │   └── 2018-10-23_10-07-31
-    │       ├── backup.stream.gz
-    │       └── xtrabackup_checkpoints
+    │   └── 2018-10-23_10-07-31
+    │       ├── backup.stream.gz
+    │       └── xtrabackup_checkpoints
     └── incr
         └── 2018-10-23_10-07-31
             ├── 2018-10-23_10-08-49
-            │   ├── backup.stream.gz
-            │   └── xtrabackup_checkpoints
+            │   ├── backup.stream.gz
+            │   └── xtrabackup_checkpoints
             └── 2018-10-23_10-13-58
                 ├── backup.stream.gz
                 └── xtrabackup_checkpoints
 
 ```bash
 # decompress
-cd /data/mysql_backup/
+cd /u3/backup/mariabackup/
 for i in $(find . -name backup.stream.gz | grep '2018-10-23_10-07-31' | xargs dirname); \
 do \
 mkdir -p $i/backup; \
